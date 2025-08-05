@@ -36,4 +36,7 @@ yarn install
 # ou
 npm install
 
+# 3. Inicie
+npm run dev
+
 ```
