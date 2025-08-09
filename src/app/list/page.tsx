@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -32,6 +32,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { useForms } from "@/hooks/use-forms";
+
 interface FormItem {
   id: string;
   titulo: string;
@@ -44,82 +46,26 @@ interface FormItem {
   views: number;
 }
 
-// Mock data for demonstration
-const mockForms: FormItem[] = [
-  {
-    id: "1",
-    titulo: "Pesquisa de Satisfação do Cliente",
-    descricao:
-      "Formulário para avaliar a satisfação dos clientes com nossos serviços",
-    status: "ativo",
-    created_at: "2024-01-15",
-    updated_at: "2024-01-20",
-    responses_count: 127,
-    questions_count: 8,
-    views: 245,
-  },
-  // {
-  //   id: "2",
-  //   titulo: "Avaliação de Treinamento",
-  //   descricao: "Formulário para coletar feedback sobre treinamentos realizados",
-  //   status: "ativo",
-  //   created_at: "2024-01-10",
-  //   updated_at: "2024-01-18",
-  //   responses_count: 89,
-  //   questions_count: 12,
-  //   views: 156,
-  // },
-  // {
-  //   id: "3",
-  //   titulo: "Cadastro de Fornecedores",
-  //   descricao: "Formulário para cadastro e qualificação de novos fornecedores",
-  //   status: "rascunho",
-  //   created_at: "2024-01-22",
-  //   updated_at: "2024-01-22",
-  //   responses_count: 0,
-  //   questions_count: 15,
-  //   views: 12,
-  // },
-  // {
-  //   id: "4",
-  //   titulo: "Pesquisa de Mercado - Q1 2024",
-  //   descricao: "Pesquisa trimestral sobre tendências do mercado",
-  //   status: "arquivado",
-  //   created_at: "2024-01-05",
-  //   updated_at: "2024-01-15",
-  //   responses_count: 234,
-  //   questions_count: 20,
-  //   views: 567,
-  // },
-  // {
-  //   id: "5",
-  //   titulo: "Feedback de Produto",
-  //   descricao: "Coleta de opiniões sobre novos produtos lançados",
-  //   status: "ativo",
-  //   created_at: "2024-01-18",
-  //   updated_at: "2024-01-25",
-  //   responses_count: 45,
-  //   questions_count: 10,
-  //   views: 98,
-  // },
-];
-
 export default function FormulariosPage() {
-  const [forms, setForms] = useState<FormItem[]>(mockForms);
+  const { forms, getAllForms, deleteForm } = useForms();
   const [selectedStatus, setSelectedStatus] = useState<string>("todos");
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ativo":
-        return "bg-emerald-100 text-emerald-700 border-emerald-200";
-      case "rascunho":
-        return "bg-amber-100 text-amber-700 border-amber-200";
-      case "arquivado":
-        return "bg-gray-100 text-gray-700 border-gray-200";
-      default:
-        return "bg-gray-100 text-gray-700 border-gray-200";
-    }
-  };
+  // const getStatusColor = (status: string) => {
+  //   switch (status) {
+  //     case "ativo":
+  //       return "bg-emerald-100 text-emerald-700 border-emerald-200";
+  //     case "rascunho":
+  //       return "bg-amber-100 text-amber-700 border-amber-200";
+  //     case "arquivado":
+  //       return "bg-gray-100 text-gray-700 border-gray-200";
+  //     default:
+  //       return "bg-gray-100 text-gray-700 border-gray-200";
+  //   }
+  // };
+
+  useEffect(() => {
+    getAllForms();
+  }, []);
 
   const getStatusLabel = (status: string) => {
     switch (status) {
@@ -134,37 +80,38 @@ export default function FormulariosPage() {
     }
   };
 
-  const filteredForms =
-    selectedStatus === "todos"
-      ? forms
-      : forms.filter((form) => form.status === selectedStatus);
+  const filteredForms = forms;
+  // selectedStatus === "todos"
+  //   ? forms
+  //   : forms.filter((form) => form.status === selectedStatus);
 
-  const handleDeleteForm = (formId: string) => {
-    setForms(forms.filter((form) => form.id !== formId));
+  const handleDeleteForm = (formId: number) => {
+    deleteForm(formId);
   };
 
-  const handleDuplicateForm = (formId: string) => {
-    const formToDuplicate = forms.find((form) => form.id === formId);
-    if (formToDuplicate) {
-      const duplicatedForm: FormItem = {
-        ...formToDuplicate,
-        id: Date.now().toString(),
-        titulo: `${formToDuplicate.titulo} (Cópia)`,
-        status: "rascunho",
-        created_at: new Date().toISOString().split("T")[0],
-        updated_at: new Date().toISOString().split("T")[0],
-        responses_count: 0,
-        views: 0,
-      };
-      setForms([duplicatedForm, ...forms]);
-    }
-  };
+  // const handleDuplicateForm = (formId: number) => {
+  //   const formToDuplicate = forms.find((form) => form.id === formId);
+  //   if (formToDuplicate) {
+  //     const duplicatedForm: FormItem = {
+  //       ...formToDuplicate,
+  //       id: Date.now().toString(),
+  //       titulo: `${formToDuplicate.titulo} (Cópia)`,
+  //       status: "rascunho",
+  //       created_at: new Date().toISOString().split("T")[0],
+  //       updated_at: new Date().toISOString().split("T")[0],
+  //       responses_count: 0,
+  //       views: 0,
+  //     };
+  //     setForms([duplicatedForm, ...forms]);
+  //   }
+  // };
 
   return (
     <div className="">
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* grid-cols-4 */}
           <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -183,7 +130,7 @@ export default function FormulariosPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+          {/* <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -199,7 +146,7 @@ export default function FormulariosPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
           <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
             <CardContent className="pt-6">
@@ -209,7 +156,8 @@ export default function FormulariosPage() {
                     Formulários Ativos
                   </p>
                   <p className="text-3xl font-bold text-gray-900">
-                    {forms.filter((form) => form.status === "ativo").length}
+                    {/* {forms.filter((form) => form.status === "ativo").length} */}
+                    {forms.length}
                   </p>
                 </div>
                 <div className="p-3 bg-green-100 rounded-xl">
@@ -219,7 +167,7 @@ export default function FormulariosPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+          {/* <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -235,11 +183,11 @@ export default function FormulariosPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex items-center gap-2 mb-6">
+        {/* <div className="flex items-center gap-2 mb-6">
           <Button
             variant={selectedStatus === "todos" ? "default" : "outline"}
             onClick={() => setSelectedStatus("todos")}
@@ -284,7 +232,7 @@ export default function FormulariosPage() {
           >
             Arquivados ({forms.filter((f) => f.status === "arquivado").length})
           </Button>
-        </div>
+        </div> */}
 
         {/* Forms Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -292,12 +240,19 @@ export default function FormulariosPage() {
             <Card
               key={form.id}
               className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm group animate-in slide-in-from-bottom-4"
-              style={{ animationDelay: `${index * 100}ms` }}
+              // style={{ animationDelay: `${index * 100}ms` }}
             >
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
+                      <Badge
+                        className={`bg-emerald-100 text-emerald-700 border-emerald-200 border font-medium`}
+                      >
+                        Ativo
+                      </Badge>
+                    </div>
+                    {/* <div className="flex items-center gap-2 mb-2">
                       <Badge
                         className={`${getStatusColor(
                           form.status
@@ -309,7 +264,7 @@ export default function FormulariosPage() {
                         <Clock className="h-3 w-3" />
                         {new Date(form.updated_at).toLocaleDateString("pt-BR")}
                       </span>
-                    </div>
+                    </div> */}
                     <CardTitle className="text-lg text-gray-800 leading-tight group-hover:text-indigo-700 transition-colors">
                       {form.titulo}
                     </CardTitle>
@@ -322,18 +277,18 @@ export default function FormulariosPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                       >
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem
+                      {/* <DropdownMenuItem
                         onClick={() => handleDuplicateForm(form.id)}
                       >
                         <Copy className="h-4 w-4 mr-2" />
                         Duplicar
-                      </DropdownMenuItem>
+                      </DropdownMenuItem> */}
                       {/* <DropdownMenuItem>
                         <Share className="h-4 w-4 mr-2" />
                         Compartilhar
@@ -344,7 +299,7 @@ export default function FormulariosPage() {
                       </DropdownMenuItem> */}
                       <DropdownMenuItem
                         onClick={() => handleDeleteForm(form.id)}
-                        className="text-red-600 focus:text-red-600"
+                        className="text-red-600 focus:text-red-600 cursor-pointer"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Excluir
@@ -356,7 +311,7 @@ export default function FormulariosPage() {
 
               <CardContent className="pt-0">
                 {/* Stats */}
-                <div className="grid grid-cols-3 gap-4 mb-4 p-3 bg-gray-50/50 rounded-lg">
+                {/* <div className="grid grid-cols-3 gap-4 mb-4 p-3 bg-gray-50/50 rounded-lg">
                   <div className="text-center">
                     <p className="text-lg font-bold text-gray-900">
                       {form.questions_count}
@@ -375,7 +330,7 @@ export default function FormulariosPage() {
                     </p>
                     <p className="text-xs text-gray-600">Visualizações</p>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Actions */}
                 <div className="flex gap-2">
@@ -384,6 +339,7 @@ export default function FormulariosPage() {
                       variant="outline"
                       size="sm"
                       className="w-full border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 bg-transparent"
+                      // className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white cursor-pointer"
                     >
                       <Eye className="h-4 w-4 mr-2" />
                       Visualizar
@@ -422,8 +378,8 @@ export default function FormulariosPage() {
                         )}".`}
                   </p>
                 </div>
-                <Link href="/">
-                  <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white">
+                <Link href="/builder">
+                  <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white cursor-pointer">
                     <Plus className="h-4 w-4 mr-2" />
                     Criar Primeiro Formulário
                   </Button>

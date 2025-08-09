@@ -17,15 +17,18 @@ export default function WelcomePage() {
         <div className="relative z-10 flex items-center justify-center w-full">
           <div className="w-full max-w-6xl mx-auto">
             <div className="text-center mb-16">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl shadow-2xl mb-8 animate-in zoom-in-50 duration-500">
+              {/* animate-in zoom-in-50 duration-500 */}
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl shadow-2xl mb-8">
                 <Sparkles className="h-10 w-10 text-white" />
               </div>
 
-              <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-800 bg-clip-text text-transparent mb-6 animate-in slide-in-from-bottom-4 duration-700">
+              {/* animate-in slide-in-from-bottom-4 duration-700 */}
+              <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-800 bg-clip-text text-transparent mb-6">
                 Bem-vindo ao Futuro dos Formulários
               </h1>
 
-              <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed animate-in slide-in-from-bottom-4 duration-700 delay-200">
+              {/* animate-in slide-in-from-bottom-4 duration-700 delay-200 */}
+              <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
                 Crie formulários dinâmicos e inteligentes que se adaptam às
                 respostas dos usuários.
                 <span className="text-indigo-600 font-semibold">
@@ -34,7 +37,8 @@ export default function WelcomePage() {
                 </span>
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 animate-in slide-in-from-bottom-4 duration-700 delay-400">
+              {/* animate-in slide-in-from-bottom-4 duration-700 delay-400 */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
                 <Button
                   size="lg"
                   className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold text-lg shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 group cursor-pointer"

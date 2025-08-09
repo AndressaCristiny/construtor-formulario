@@ -19,5 +19,4 @@ export type QuestionType =
   | "multipla_escolha"
   | "unica_escolha"
   | "texto_livre"
-  | "inteiro"
-  | "decimal";
+  | "numero";

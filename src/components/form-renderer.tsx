@@ -1,6 +1,15 @@
 "use client";
 
+// Principais hooks
 import { useState, useEffect } from "react";
+
+// Hooks personalizados
+import { useForms } from "@/hooks/use-forms";
+import { useQuestions } from "@/hooks/use-questions";
+import { useAnswerOptions } from "@/hooks/use-answer-options";
+import { useQuestionAnswerOptions } from "@/hooks/use-question-answer-options";
+
+// Componentes
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,14 +25,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertCircle, Sparkles, Send, Eye } from "lucide-react";
-import { Question } from "@/type/question.type";
 
-interface FormData {
-  id: number;
-  titulo: string;
-  descricao: string;
-  questions: Question[];
-}
+// Types
+import { Question } from "@/type/question.type";
+import { FormData } from "@/type/formData.type";
 
 interface FormResponse {
   [questionId: string]: {
@@ -164,7 +169,7 @@ export function FormRenderer({ formData, onSubmit }: FormRendererProps) {
           </div>
         );
 
-      case "inteiro":
+      case "numero":
         return (
           <div className="space-y-2">
             <Input
@@ -391,7 +396,7 @@ export function FormRenderer({ formData, onSubmit }: FormRendererProps) {
     (Object.keys(responses).length / visibleQuestionsList.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+    <div className="">
       {/* Progress Bar */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b border-indigo-100">
         <div className="h-1 bg-gray-200">

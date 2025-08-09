@@ -11,8 +11,7 @@ export interface CreateQuestionsDTO {
     | "multipla_escolha"
     | "unica_escolha"
     | "texto_livre"
-    | "inteiro"
-    | "decimal";
+    | "numero";
   condicao_resposta?: string;
   id_pergunta_pai?: number;
 }

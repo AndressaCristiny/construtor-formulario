@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForms } from "@/hooks/use-forms";
 import { useQuestions } from "@/hooks/use-questions";
@@ -25,6 +25,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -35,22 +43,53 @@ import {
   Sparkles,
   Save,
   CheckCircle,
+  PartyPopper,
 } from "lucide-react";
+// Drag & Drop
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import SortableQuestion from "@/components/sortable-question";
+
 import { Question, QuestionType } from "@/type/question.type";
 import { AnswerOption } from "@/type/answerOption.type";
 
 export default function FormBuilder() {
+  // Hooks
+  const router = useRouter();
   const { createForm } = useForms();
   const { createQuestions } = useQuestions();
   const { createAnswerOption } = useAnswerOptions();
   const { createQuestionAnswerOption } = useQuestionAnswerOptions();
 
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+  );
+
+  // Enviando formulários
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+  const [savedQuestionsCount, setSavedQuestionsCount] = useState<number>(0);
+
+  // Formulário
   const [title, setTitle] = useState("Formulário sem título");
   const [description, setDescription] = useState("Formulário sem descrição");
   const [formQuestions, setFormQuestions] = useState<Question[]>([]);
-  const [showQuestionForm, setShowQuestionForm] = useState(false);
 
+  // Questões
+  const [showQuestionForm, setShowQuestionForm] = useState(false);
   const [newQuestion, setNewQuestion] = useState<Partial<Question>>({
     titulo: "",
     codigo: "",
@@ -108,7 +147,7 @@ export default function FormBuilder() {
   const addAnswerOption = () => {
     const newOption: AnswerOption = {
       id: Date.now(),
-      id_pergunta: Number(newQuestion.id),
+      id_pergunta: String(newQuestion.id),
       resposta: "",
       ordem: (newQuestion.opcoes_respostas?.length || 0) + 1,
       resposta_aberta: false,
@@ -156,9 +195,8 @@ export default function FormBuilder() {
       texto_livre: "Texto Livre",
       multipla_escolha: "Múltipla Escolha",
       unica_escolha: "Única Escolha",
-      inteiro: "Número",
+      numero: "Número",
       sim_nao: "Sim/Não",
-      decimal: "Decimal",
     };
     return labels[type];
   };
@@ -168,9 +206,8 @@ export default function FormBuilder() {
       texto_livre: "📝",
       multipla_escolha: "☑️",
       unica_escolha: "🔘",
-      inteiro: "🔢",
+      numero: "🔢",
       sim_nao: "✅",
-      decimal: "🔢",
     };
     return icons[type];
   };
@@ -188,6 +225,18 @@ export default function FormBuilder() {
       obrigatoria: false,
       sub_pergunta: false,
       opcoes_respostas: [],
+    });
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    setFormQuestions((prev) => {
+      const oldIndex = prev.findIndex((q) => q.id === active.id);
+      const newIndex = prev.findIndex((q) => q.id === over.id);
+      const reordered = arrayMove(prev, oldIndex, newIndex);
+      return reordered.map((q, idx) => ({ ...q, ordem: idx + 1 }));
     });
   };
 
@@ -264,6 +313,8 @@ export default function FormBuilder() {
 
       console.log("✅ Formulário salvo com sucesso.");
       setShowSuccessMessage(true);
+      setShowSuccessOverlay(true);
+      setSavedQuestionsCount(formQuestions.length);
 
       setTimeout(() => {
         resetForm();
@@ -287,6 +338,62 @@ export default function FormBuilder() {
           </Alert>
         </div>
       )}
+
+      {/* Success Overlay Dialog */}
+      <Dialog open={showSuccessOverlay} onOpenChange={setShowSuccessOverlay}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <div className="mx-auto h-14 w-14 rounded-full bg-emerald-100 flex items-center justify-center">
+              <PartyPopper className="h-7 w-7 text-emerald-600" />
+            </div>
+            <DialogTitle className="text-center mt-2">
+              Formulário salvo com sucesso
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              Seu formulário{" "}
+              <span className="font-medium text-foreground">{title}</span> foi
+              salvo com{" "}
+              <span className="font-medium">{savedQuestionsCount}</span>{" "}
+              pergunta
+              {savedQuestionsCount === 1 ? "" : "s"}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-2 rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-sm text-emerald-800">
+            • Você pode começar um novo formulário, visualizar a lista de
+            formulários ou fechar esta mensagem.
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-center">
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 cursor-pointer"
+              onClick={() => {
+                resetForm();
+                setShowSuccessOverlay(false);
+              }}
+            >
+              Criar novo formulário
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowSuccessOverlay(false);
+                router.push("/list");
+              }}
+              className="cursor-pointer"
+            >
+              Ver formulários
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setShowSuccessOverlay(false)}
+              className="cursor-pointer"
+            >
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="w-full flex justify-center p-6">
         <div className="w-full max-w-4xl flex flex-col gap-8">
@@ -324,100 +431,124 @@ export default function FormBuilder() {
           </Card>
 
           {/* Perguntas existentes */}
-          {formQuestions.map((question, index) => (
-            <Card
-              key={question.id}
-              className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm group"
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis]}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={formQuestions.map((q) => q.id)}
+              strategy={verticalListSortingStrategy}
             >
-              <CardHeader className="bg-gradient-to-r from-gray-50/50 to-transparent">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-3">
-                      <GripVertical className="h-5 w-5 text-gray-400 group-hover:text-indigo-500 transition-colors" />
-                      <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md">
-                        {index + 1}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">
-                        {getQuestionTypeIcon(question.tipo_pergunta)}
-                      </span>
-                      <div>
-                        <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full font-medium">
-                          {getQuestionTypeLabel(question.tipo_pergunta)}
-                        </span>
-                        {question.obrigatoria && (
-                          <span className="ml-2 text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium">
-                            Obrigatória
-                          </span>
-                        )}
-                        {question.sub_pergunta && (
-                          <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">
-                            Condicional
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeQuestion(question.id)}
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50 transition-all duration-200"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-                <CardTitle className="text-xl text-gray-800 mt-4">
-                  {question.titulo}
-                </CardTitle>
-                {question.orientacao_resposta && (
-                  <CardDescription className="text-gray-600 text-base">
-                    {question.orientacao_resposta}
-                  </CardDescription>
-                )}
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-6 text-sm text-gray-600">
-                    <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-medium">
-                      Código: {question.codigo}
-                    </span>
-                  </div>
-
-                  {/* Mostrar opções de resposta para múltipla escolha/escolha única */}
-                  {needsAnswerOptions(question.tipo_pergunta) &&
-                    question.opcoes_respostas.length > 0 && (
-                      <div className="mt-6">
-                        <Label className="text-sm font-semibold text-gray-700 mb-3 block">
-                          Opções de resposta:
-                        </Label>
-                        <div className="space-y-3">
-                          {question.opcoes_respostas.map((option, optIndex) => (
-                            <div
-                              key={option.id}
-                              className="flex items-center gap-3 p-3 bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-lg border border-gray-200"
-                            >
-                              <span className="w-6 h-6 bg-indigo-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                                {optIndex + 1}
-                              </span>
-                              <span className="text-gray-700 font-medium flex-1">
-                                {option.resposta}
-                              </span>
-                              {option.resposta_aberta && (
-                                <span className="text-xs text-blue-600 bg-blue-100 px-3 py-1 rounded-full font-medium">
-                                  + Texto livre
-                                </span>
-                              )}
+              {formQuestions.map((question, index) => (
+                <SortableQuestion key={question.id} id={question.id}>
+                  {({ attributes, listeners, setActivatorNodeRef }) => (
+                    <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm group">
+                      <CardHeader className="bg-gradient-to-r from-gray-50/50 to-transparent">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-1">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                ref={setActivatorNodeRef}
+                                {...attributes}
+                                {...listeners}
+                                className="text-gray-400 hover:text-indigo-600 cursor-grab active:cursor-grabbing"
+                                title="Arraste para reordenar"
+                              >
+                                <GripVertical className="h-5 w-5" />
+                              </Button>
+                              <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md">
+                                {index + 1}
+                              </div>
                             </div>
-                          ))}
+                            <div className="flex items-center gap-3">
+                              <span className="text-2xl">
+                                {getQuestionTypeIcon(question.tipo_pergunta)}
+                              </span>
+                              <div>
+                                <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full font-medium">
+                                  {getQuestionTypeLabel(question.tipo_pergunta)}
+                                </span>
+                                {question.obrigatoria && (
+                                  <span className="ml-2 text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium">
+                                    Obrigatória
+                                  </span>
+                                )}
+                                {question.sub_pergunta && (
+                                  <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">
+                                    Condicional
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeQuestion(question.id)}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 transition-all duration-200 cursor-pointer"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
-                      </div>
-                    )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                        <CardTitle className="text-xl text-gray-800 mt-4">
+                          {question.titulo}
+                        </CardTitle>
+                        {question.orientacao_resposta && (
+                          <CardDescription className="text-gray-600 text-base">
+                            {question.orientacao_resposta}
+                          </CardDescription>
+                        )}
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-6 text-sm text-gray-600">
+                            <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-medium">
+                              Código: {question.codigo}
+                            </span>
+                          </div>
+                          {needsAnswerOptions(question.tipo_pergunta) &&
+                            question.opcoes_respostas.length > 0 && (
+                              <div className="mt-6">
+                                <Label className="text-sm font-semibold text-gray-700 mb-3 block">
+                                  Opções de resposta:
+                                </Label>
+                                <div className="space-y-3">
+                                  {question.opcoes_respostas.map(
+                                    (option, optIndex) => (
+                                      <div
+                                        key={option.id}
+                                        className="flex items-center gap-3 p-3 bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-lg border border-gray-200"
+                                      >
+                                        <span className="w-6 h-6 bg-indigo-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                                          {optIndex + 1}
+                                        </span>
+                                        <span className="text-gray-700 font-medium flex-1">
+                                          {option.resposta}
+                                        </span>
+                                        {option.resposta_aberta && (
+                                          <span className="text-xs text-blue-600 bg-blue-100 px-3 py-1 rounded-full font-medium">
+                                            + Texto livre
+                                          </span>
+                                        )}
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </SortableQuestion>
+              ))}
+            </SortableContext>
+          </DndContext>
 
           {/* Adicionar pergunta no formulário */}
           {showQuestionForm && (
@@ -675,7 +806,7 @@ export default function FormBuilder() {
                           variant="ghost"
                           size="sm"
                           onClick={() => removeAnswerOption(option.id)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -688,7 +819,7 @@ export default function FormBuilder() {
                   <Button
                     onClick={addQuestion}
                     disabled={!newQuestion.titulo}
-                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
                   >
                     <CirclePlus className="h-4 w-4 mr-2" />
                     Adicionar Pergunta
@@ -696,7 +827,7 @@ export default function FormBuilder() {
                   <Button
                     variant="outline"
                     onClick={() => setShowQuestionForm(false)}
-                    className="border-gray-300 hover:bg-gray-50"
+                    className="border-gray-300 hover:bg-gray-50 cursor-pointer"
                   >
                     Cancelar
                   </Button>
@@ -711,7 +842,7 @@ export default function FormBuilder() {
               <div className="flex justify-center py-12">
                 <Button
                   variant="ghost"
-                  className="w-full max-w-md flex items-center justify-center gap-3 py-8 text-lg font-medium text-indigo-700 hover:text-indigo-800 hover:bg-indigo-50 transition-all duration-300"
+                  className="w-full max-w-md flex items-center justify-center gap-3 py-8 text-lg font-medium text-indigo-700 hover:text-indigo-800 hover:bg-indigo-50 transition-all duration-300 cursor-pointer"
                   onClick={() => setShowQuestionForm(true)}
                 >
                   <CirclePlus className="h-12 w-12 text-indigo-500" />
@@ -733,7 +864,7 @@ export default function FormBuilder() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                   <Button
                     size="lg"
-                    className="px-8 py-4 bg-white text-indigo-700 hover:bg-gray-50 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                    className="px-8 py-4 bg-white text-indigo-700 hover:bg-gray-50 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer"
                     onClick={handleSaveForms}
                   >
                     <Save className="h-5 w-5 mr-3" />
