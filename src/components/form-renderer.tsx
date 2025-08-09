@@ -3,12 +3,6 @@
 // Principais hooks
 import { useState, useEffect } from "react";
 
-// Hooks personalizados
-import { useForms } from "@/hooks/use-forms";
-import { useQuestions } from "@/hooks/use-questions";
-import { useAnswerOptions } from "@/hooks/use-answer-options";
-import { useQuestionAnswerOptions } from "@/hooks/use-question-answer-options";
-
 // Componentes
 import { Button } from "@/components/ui/button";
 import {
@@ -46,14 +40,14 @@ export function FormRenderer({ formData, onSubmit }: FormRendererProps) {
   const [responses, setResponses] = useState<FormResponse>({});
   const [errors, setErrors] = useState<{ [questionId: string]: string }>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [visibleQuestions, setVisibleQuestions] = useState<Set<string>>(
+  const [visibleQuestions, setVisibleQuestions] = useState<Set<number>>(
     new Set()
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize visible questions (non-sub-questions are always visible)
   useEffect(() => {
-    const initialVisible = new Set<string>();
+    const initialVisible = new Set<number>();
     formData.questions.forEach((question) => {
       if (!question.sub_pergunta) {
         initialVisible.add(question.id);
@@ -63,7 +57,7 @@ export function FormRenderer({ formData, onSubmit }: FormRendererProps) {
   }, [formData.questions]);
 
   useEffect(() => {
-    const newVisibleQuestions = new Set<string>();
+    const newVisibleQuestions = new Set<number>();
 
     formData.questions.forEach((question) => {
       if (!question.sub_pergunta) {
@@ -91,7 +85,7 @@ export function FormRenderer({ formData, onSubmit }: FormRendererProps) {
   }, [responses, formData.questions]);
 
   const handleResponseChange = (
-    questionId: string,
+    questionId: number,
     value: string | string[],
     openText?: string
   ) => {
@@ -392,21 +386,8 @@ export function FormRenderer({ formData, onSubmit }: FormRendererProps) {
     .filter((q) => visibleQuestions.has(q.id))
     .sort((a, b) => a.ordem - b.ordem);
 
-  const progress =
-    (Object.keys(responses).length / visibleQuestionsList.length) * 100;
-
   return (
     <div className="">
-      {/* Progress Bar */}
-      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b border-indigo-100">
-        <div className="h-1 bg-gray-200">
-          <div
-            className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-500 ease-out"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
-
       <div className="w-full flex justify-center p-6">
         <div className="w-full max-w-3xl flex flex-col gap-8">
           {/* Form Header */}

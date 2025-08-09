@@ -1,7 +1,7 @@
 import { AnswerOption } from "./answerOption.type";
 
 export interface Question {
-  id: string;
+  id: number;
   titulo: string;
   codigo: string;
   orientacao_resposta: string;
